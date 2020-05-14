@@ -1,11 +1,15 @@
-# task1
-it is a pkg that subscribes to image and publishes coordinates of the cntre of green box
-#include <ros/ros.h>
+//# task1
+//it is a pkg that subscribes to image and publishes coordinates of the cntre of green box
+   #include <ros/ros.h>
    #include <image_transport/image_transport.h>
    #include <cv_bridge/cv_bridge.h>
    #include <sensor_msgs/image_encodings.h>
    #include <opencv2/imgproc/imgproc.hpp>                          //inc
    #include <opencv2/highgui/highgui.hpp>
+   #include "opencv2/imgproc.hpp"
+   #include "opencv2/imgcodecs.hpp"
+   #include "opencv2/highgui.hpp"
+   #include <iostream>
     
    static const std::string OPENCV_WINDOW = "Image window";
     
