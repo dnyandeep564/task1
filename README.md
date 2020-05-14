@@ -50,10 +50,18 @@
          return;
        }
    
-       // Draw an example circle on the video stream
-       if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)                                      //               edit req
-         cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
-   
+       mat dst,src_gray;
+        cvtColor( cv_ptr->image, src_gray, COLOR_BGR2GRAY ); // Convert the image to Gray
+       
+       double thresh = 50;
+
+       double maxValue = 255;
+       
+         // Binary Threshold
+
+       threshold(src_gray,dst, thresh, maxValue, THRESH_BINARY);
+       cv_ptr->image = dst;
+
        // Update GUI Window
        cv::imshow(OPENCV_WINDOW, cv_ptr->image);
        cv::waitKey(3);
