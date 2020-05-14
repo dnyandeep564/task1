@@ -10,6 +10,8 @@
    #include "opencv2/imgcodecs.hpp"
    #include "opencv2/highgui.hpp"
    #include <iostream>
+   
+   #include <sstream>
     
    static const std::string OPENCV_WINDOW = "Image window";
     
@@ -19,7 +21,10 @@
      image_transport::ImageTransport it_;                                     //rosnode
      image_transport::Subscriber image_sub_;
      image_transport::Publisher image_pub_;
-   
+     
+     ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 100);    //pub 
+     ros::Rate loop_rate(30);
+        
    public:
      ImageConverter()
        : it_(nh_)
@@ -50,16 +55,49 @@
          return;
        }
    
-       // Draw an example circle on the video stream
-       if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)                                      //               edit req
-         cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
-   
+       mat dst,src_gray;
+        cvtColor( cv_ptr->image, src_gray, COLOR_BGR2GRAY ); // Convert the image to Gray
+       
+       double thresh = 50;
+
+       double maxValue = 255;
+       
+         // Binary Threshold
+
+       threshold(src_gray,dst, thresh, maxValue, THRESH_BINARY);
+       cv_ptr->image = dst;
+
        // Update GUI Window
        cv::imshow(OPENCV_WINDOW, cv_ptr->image);
        cv::waitKey(3);
    
        // Output modified video stream
        image_pub_.publish(cv_ptr->toImageMsg());
+       
+       Mat canny_output;
+       Canny( cv_ptr->image, canny_output, thresh, thresh*2 );
+       vector<vector<Point> > contours;
+       findContours( canny_output, contours, CV_RETR_EXTERNAL, CHAIN_APPROX_SIMPLE );
+       
+       vector<vector<Point> > contours_poly( contours.size() );
+       vector<Rect> boundRect( contours.size() );
+       
+       for( size_t i = 0; i < contours.size(); i++ )
+       {
+           approxPolyDP( contours[i], contours_poly[i], 3, true );
+           boundRect[i] = boundingRect( contours_poly[i] );
+           
+           std_msgs::String msg;
+   
+           std::stringstream ss;
+           ss << "x coordinate = " << (boundRect[i].tl.x + boundRect[i].br.x)/2 << "y coordinate = " << (boundRect[i].tl.y + boundRect[i].br.y)/2 ;
+           msg.data = ss.str();
+     
+           ROS_INFO("%s", msg.data.c_str());
+           
+           chatter_pub.publish(msg);
+           loop_rate.sleep();
+       }
      }
    };
    
